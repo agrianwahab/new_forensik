@@ -15,7 +15,6 @@ warnings.filterwarnings('ignore')
 
 def sigmoid(x):
     """Sigmoid activation function"""
-    # Clip x to prevent overflow untuk nilai yang sangat besar/kecil
     x = np.clip(x, -500, 500)
     return 1 / (1 + np.exp(-x))
 
@@ -102,17 +101,12 @@ def prepare_feature_vector(analysis_results):
 
 def validate_feature_vector(feature_vector):
     """Validate and clean feature vector"""
-    # Replace NaN and infinite values
     feature_vector = np.nan_to_num(feature_vector, nan=0.0, posinf=1.0, neginf=0.0)
-    
-    # Ensure all values are finite
     feature_vector = np.clip(feature_vector, -1000, 1000)
-    
     return feature_vector
 
 def normalize_feature_vector(feature_vector):
     """Normalize feature vector for ML processing"""
-    # Min-max normalization
     feature_min = np.min(feature_vector)
     feature_max = np.max(feature_vector)
     
@@ -120,30 +114,27 @@ def normalize_feature_vector(feature_vector):
         normalized = (feature_vector - feature_min) / (feature_max - feature_min)
     else:
         normalized = np.zeros_like(feature_vector)
-    
     return normalized
 
 # ======================= Machine Learning Classification =======================
 
 def classify_with_ml(feature_vector):
     """Classify using pre-trained models (simplified version)"""
-    # Validate and normalize features
     feature_vector = validate_feature_vector(feature_vector)
     
-    # Simple thresholding approach based on key indicators
     copy_move_indicators = [
-        feature_vector[7] > 10 if len(feature_vector) > 7 else False,  # ransac_inliers
-        feature_vector[9] > 10 if len(feature_vector) > 9 else False,  # block_matches
-        feature_vector[8] > 0 if len(feature_vector) > 8 else False,   # geometric_transform
+        feature_vector[7] > 10 if len(feature_vector) > 7 else False,
+        feature_vector[9] > 10 if len(feature_vector) > 9 else False,
+        feature_vector[8] > 0 if len(feature_vector) > 8 else False,
     ]
     
     splicing_indicators = [
-        feature_vector[0] > 8 if len(feature_vector) > 0 else False,   # ela_mean
-        feature_vector[4] > 3 if len(feature_vector) > 4 else False,   # outlier_regions
-        feature_vector[10] > 0.3 if len(feature_vector) > 10 else False,  # noise_inconsistency
-        feature_vector[11] > 0.15 if len(feature_vector) > 11 else False,  # jpeg_ghost_ratio
-        feature_vector[17] > 0.3 if len(feature_vector) > 17 else False,  # edge_inconsistency
-        feature_vector[18] > 0.3 if len(feature_vector) > 18 else False,  # illumination_inconsistency
+        feature_vector[0] > 8 if len(feature_vector) > 0 else False,
+        feature_vector[4] > 3 if len(feature_vector) > 4 else False,
+        feature_vector[10] > 0.3 if len(feature_vector) > 10 else False,
+        feature_vector[11] > 0.15 if len(feature_vector) > 11 else False,
+        feature_vector[17] > 0.3 if len(feature_vector) > 17 else False,
+        feature_vector[18] > 0.3 if len(feature_vector) > 18 else False,
     ]
     
     copy_move_score = sum(copy_move_indicators) * 20
@@ -156,25 +147,20 @@ def classify_with_advanced_ml(feature_vector):
     feature_vector = validate_feature_vector(feature_vector)
     normalized_features = normalize_feature_vector(feature_vector)
     
-    # Simulate ensemble classification
     scores = {}
     
-    # Random Forest simulation
     rf_copy_move = simulate_random_forest_classification(normalized_features, 'copy_move')
     rf_splicing = simulate_random_forest_classification(normalized_features, 'splicing')
     scores['random_forest'] = (rf_copy_move, rf_splicing)
     
-    # SVM simulation
     svm_copy_move = simulate_svm_classification(normalized_features, 'copy_move')
     svm_splicing = simulate_svm_classification(normalized_features, 'splicing')
     scores['svm'] = (svm_copy_move, svm_splicing)
     
-    # Neural Network simulation
     nn_copy_move = simulate_neural_network_classification(normalized_features, 'copy_move')
     nn_splicing = simulate_neural_network_classification(normalized_features, 'splicing')
     scores['neural_network'] = (nn_copy_move, nn_splicing)
     
-    # Ensemble averaging
     copy_move_scores = [scores[model][0] for model in scores]
     splicing_scores = [scores[model][1] for model in scores]
     
@@ -185,21 +171,16 @@ def classify_with_advanced_ml(feature_vector):
 
 def simulate_random_forest_classification(features, manipulation_type):
     """Simulate Random Forest classification"""
-    # Weighted feature importance for Random Forest
     if manipulation_type == 'copy_move':
-        # Features more important for copy-move: RANSAC, block matches, geometric transform
         weights = np.array([0.5, 0.5, 1.0, 1.0, 1.0, 0.8, 1.5, 2.0, 2.0, 1.8, 0.7, 0.5, 0.3, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0.8, 0.8, 0.5, 1.0, 0.5, 0.5])
-    else:  # splicing
-        # Features more important for splicing: ELA, noise, texture, illumination
+    else:
         weights = np.array([2.0, 2.0, 1.5, 1.5, 1.8, 1.5, 0.5, 0.5, 0.3, 0.5, 1.8, 1.0, 1.0, 1.5, 1.2, 1.5, 1.8, 1.8, 1.5, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.0, 0.8, 0.8, 0.8])
     
-    # Ensure weights match features length
     if len(weights) > len(features):
         weights = weights[:len(features)]
     elif len(weights) < len(features):
         weights = np.pad(weights, (0, len(features) - len(weights)), 'constant', constant_values=0.5)
     
-    # Weighted score calculation
     weighted_features = features * weights
     score = np.sum(weighted_features) / len(features) * 100
     
@@ -207,25 +188,20 @@ def simulate_random_forest_classification(features, manipulation_type):
 
 def simulate_svm_classification(features, manipulation_type):
     """Simulate SVM classification - IMPROVED VERSION"""
-    # SVM-style decision boundary simulation
     if manipulation_type == 'copy_move':
-        # Focus on geometric and structural features
         if len(features) > 10:
-            key_features = features[6:10]  # SIFT and block features
+            key_features = features[6:10]
         else:
             key_features = features[:min(4, len(features))]
         threshold = 0.3
-    else:  # splicing
-        # Focus on statistical and consistency features
+    else:
         if len(features) > 18:
-            # Safe indexing for ELA, noise, texture, edge, illumination
             indices = [i for i in [0, 1, 10, 16, 17, 18] if i < len(features)]
             key_features = features[indices]
         else:
             key_features = features[:min(6, len(features))]
         threshold = 0.25
     
-    # Distance from decision boundary
     if len(key_features) > 0:
         feature_mean = np.mean(key_features)
         decision_score = max(0, (feature_mean - threshold) * 200)
@@ -237,42 +213,26 @@ def simulate_svm_classification(features, manipulation_type):
 def simulate_neural_network_classification(features, manipulation_type):
     """Simulate Neural Network classification - FIXED VERSION"""
     try:
-        # Multi-layer perception simulation
-        
-        # Hidden layer 1 (non-linear transformation)
         hidden1 = tanh_activation(features * 2 - 1)
-        
-        # Hidden layer 2 - PERBAIKAN: gunakan custom sigmoid function
         hidden2 = sigmoid(hidden1 * 1.5)
         
-        # Output layer
         if manipulation_type == 'copy_move':
-            # Weights favor structural features
             output_weights = np.ones(len(hidden2))
             if len(hidden2) > 10:
-                output_weights[6:min(10, len(hidden2))] *= 2.0  # Boost SIFT/block features
-        else:  # splicing
-            # Weights favor consistency features
+                output_weights[6:min(10, len(hidden2))] *= 2.0
+        else:
             output_weights = np.ones(len(hidden2))
             if len(hidden2) > 18:
-                # Safe indexing for consistency features
                 indices = [i for i in [0, 1, 10, 16, 17, 18] if i < len(hidden2)]
                 for idx in indices:
                     output_weights[idx] *= 2.0
         
-        # Final score
         output = np.sum(hidden2 * output_weights) / len(hidden2) * 100
-        
         return min(max(output, 0), 100)
-        
     except Exception as e:
         print(f"  Warning: Neural network simulation failed: {e}")
-        # Fallback to simple linear scoring
         feature_sum = np.sum(features)
-        if manipulation_type == 'copy_move':
-            return min(feature_sum * 5, 100)
-        else:
-            return min(feature_sum * 3, 100)
+        return min(feature_sum * 5, 100) if manipulation_type == 'copy_move' else min(feature_sum * 3, 100)
 
 # ======================= Advanced Classification System =======================
 
@@ -280,174 +240,102 @@ def classify_manipulation_advanced(analysis_results):
     """Advanced classification with comprehensive scoring including localization"""
     
     try:
-        # Prepare feature vector
         feature_vector = prepare_feature_vector(analysis_results)
-        
-        # ML-based scoring
         ml_copy_move_score, ml_splicing_score = classify_with_ml(feature_vector)
-        
-        # Advanced ML ensemble scoring
         ensemble_copy_move, ensemble_splicing, ml_scores = classify_with_advanced_ml(feature_vector)
         
-        # Traditional rule-based scoring
         copy_move_score = 0
         splicing_score = 0
         
         # === Enhanced Copy-Move Detection ===
-        
-        # 1. RANSAC geometric verification (Strong indicator)
         ransac_inliers = analysis_results['ransac_inliers']
-        if ransac_inliers >= 20:
-            copy_move_score += 50
-        elif ransac_inliers >= 15:
-            copy_move_score += 40
-        elif ransac_inliers >= 10:
-            copy_move_score += 30
-        elif ransac_inliers >= 5:
-            copy_move_score += 20
+        if ransac_inliers >= 20: copy_move_score += 50
+        elif ransac_inliers >= 15: copy_move_score += 40
+        elif ransac_inliers >= 10: copy_move_score += 30
+        elif ransac_inliers >= 5: copy_move_score += 20
         
-        # 2. Block matching
         block_matches = len(analysis_results['block_matches'])
-        if block_matches >= 30:
-            copy_move_score += 40
-        elif block_matches >= 20:
-            copy_move_score += 30
-        elif block_matches >= 10:
-            copy_move_score += 20
-        elif block_matches >= 5:
-            copy_move_score += 10
+        if block_matches >= 30: copy_move_score += 40
+        elif block_matches >= 20: copy_move_score += 30
+        elif block_matches >= 10: copy_move_score += 20
+        elif block_matches >= 5: copy_move_score += 10
         
-        # 3. Geometric transformation
-        if analysis_results['geometric_transform'] is not None:
-            copy_move_score += 25
+        if analysis_results['geometric_transform'] is not None: copy_move_score += 25
+        if analysis_results['sift_matches'] > 50: copy_move_score += 15
         
-        # 4. Multiple feature detector agreement
-        sift_matches = analysis_results['sift_matches']
-        if sift_matches > 50:
-            copy_move_score += 15
-        
-        # 5. Low regional variance (same source)
         ela_regional = analysis_results['ela_regional_stats']
-        if ela_regional['regional_inconsistency'] < 0.2:
-            copy_move_score += 10
+        if ela_regional['regional_inconsistency'] < 0.2: copy_move_score += 10
         
-        # 6. Localization evidence for copy-move
         if 'localization_analysis' in analysis_results:
-            loc_results = analysis_results['localization_analysis']
-            tampering_pct = loc_results['tampering_percentage']
-            # Moderate tampering percentage suggests copy-move
-            if 10 < tampering_pct < 40:
-                copy_move_score += 15
-            elif 5 < tampering_pct <= 10:
-                copy_move_score += 10
+            tampering_pct = analysis_results['localization_analysis']['tampering_percentage']
+            if 10 < tampering_pct < 40: copy_move_score += 15
+            elif 5 < tampering_pct <= 10: copy_move_score += 10
         
         # === Enhanced Splicing Detection ===
-        
-        # 1. ELA indicators
         ela_mean = analysis_results['ela_mean']
         ela_std = analysis_results['ela_std']
-        if ela_mean > 10.0 or ela_std > 20.0:
-            splicing_score += 30
-        elif ela_mean > 8.0 or ela_std > 18.0:
-            splicing_score += 25
-        elif ela_mean > 6.0 or ela_std > 15.0:
-            splicing_score += 15
+        if ela_mean > 10.0 or ela_std > 20.0: splicing_score += 30
+        elif ela_mean > 8.0 or ela_std > 18.0: splicing_score += 25
+        elif ela_mean > 6.0 or ela_std > 15.0: splicing_score += 15
         
-        # 2. Regional ELA anomalies
         outlier_regions = ela_regional['outlier_regions']
         suspicious_regions = len(ela_regional['suspicious_regions'])
-        if outlier_regions > 8 or suspicious_regions > 5:
-            splicing_score += 35
-        elif outlier_regions > 5 or suspicious_regions > 3:
-            splicing_score += 25
-        elif outlier_regions > 2 or suspicious_regions > 1:
-            splicing_score += 15
+        if outlier_regions > 8 or suspicious_regions > 5: splicing_score += 35
+        elif outlier_regions > 5 or suspicious_regions > 3: splicing_score += 25
+        elif outlier_regions > 2 or suspicious_regions > 1: splicing_score += 15
         
-        # 3. Noise inconsistency
         noise_inconsistency = analysis_results['noise_analysis']['overall_inconsistency']
-        if noise_inconsistency > 0.5:
-            splicing_score += 35
-        elif noise_inconsistency > 0.35:
-            splicing_score += 25
-        elif noise_inconsistency > 0.25:
-            splicing_score += 15
+        if noise_inconsistency > 0.5: splicing_score += 35
+        elif noise_inconsistency > 0.35: splicing_score += 25
+        elif noise_inconsistency > 0.25: splicing_score += 15
         
-        # 4. JPEG artifacts
         jpeg_suspicious = analysis_results['jpeg_ghost_suspicious_ratio']
         jpeg_compression = analysis_results['jpeg_analysis']['compression_inconsistency']
-        if jpeg_suspicious > 0.25 or jpeg_compression:
-            splicing_score += 30
-        elif jpeg_suspicious > 0.15:
-            splicing_score += 20
-        elif jpeg_suspicious > 0.1:
-            splicing_score += 10
+        if jpeg_suspicious > 0.25 or jpeg_compression: splicing_score += 30
+        elif jpeg_suspicious > 0.15: splicing_score += 20
+        elif jpeg_suspicious > 0.1: splicing_score += 10
         
-        # 5. Frequency domain anomalies
-        freq_inconsistency = analysis_results['frequency_analysis']['frequency_inconsistency']
-        if freq_inconsistency > 1.5:
-            splicing_score += 25
-        elif freq_inconsistency > 1.0:
-            splicing_score += 15
+        if analysis_results['frequency_analysis']['frequency_inconsistency'] > 1.5: splicing_score += 25
+        elif analysis_results['frequency_analysis']['frequency_inconsistency'] > 1.0: splicing_score += 15
         
-        # 6. Texture inconsistency
-        texture_inconsistency = analysis_results['texture_analysis']['overall_inconsistency']
-        if texture_inconsistency > 0.4:
-            splicing_score += 20
-        elif texture_inconsistency > 0.3:
-            splicing_score += 15
+        if analysis_results['texture_analysis']['overall_inconsistency'] > 0.4: splicing_score += 20
+        elif analysis_results['texture_analysis']['overall_inconsistency'] > 0.3: splicing_score += 15
         
-        # 7. Edge inconsistency
-        edge_inconsistency = analysis_results['edge_analysis']['edge_inconsistency']
-        if edge_inconsistency > 0.4:
-            splicing_score += 20
-        elif edge_inconsistency > 0.3:
-            splicing_score += 15
+        if analysis_results['edge_analysis']['edge_inconsistency'] > 0.4: splicing_score += 20
+        elif analysis_results['edge_analysis']['edge_inconsistency'] > 0.3: splicing_score += 15
         
-        # 8. Illumination inconsistency
-        illum_inconsistency = analysis_results['illumination_analysis']['overall_illumination_inconsistency']
-        if illum_inconsistency > 0.4:
-            splicing_score += 25
-        elif illum_inconsistency > 0.3:
-            splicing_score += 15
+        if analysis_results['illumination_analysis']['overall_illumination_inconsistency'] > 0.4: splicing_score += 25
+        elif analysis_results['illumination_analysis']['overall_illumination_inconsistency'] > 0.3: splicing_score += 15
         
-        # 9. Statistical anomalies
         stat_analysis = analysis_results['statistical_analysis']
-        correlation_anomaly = (
-            abs(stat_analysis['rg_correlation']) < 0.3 or
-            abs(stat_analysis['rb_correlation']) < 0.3 or
-            abs(stat_analysis['gb_correlation']) < 0.3
-        )
-        if correlation_anomaly:
-            splicing_score += 15
+        correlation_anomaly = (abs(stat_analysis['rg_correlation']) < 0.3 or abs(stat_analysis['rb_correlation']) < 0.3 or abs(stat_analysis['gb_correlation']) < 0.3)
+        if correlation_anomaly: splicing_score += 15
         
-        # 10. Metadata inconsistencies
         metadata_issues = len(analysis_results['metadata']['Metadata_Inconsistency'])
         metadata_score = analysis_results['metadata']['Metadata_Authenticity_Score']
-        if metadata_issues > 2 or metadata_score < 50:
-            splicing_score += 20
-        elif metadata_issues > 0 or metadata_score < 70:
-            splicing_score += 10
+        if metadata_issues > 2 or metadata_score < 50: splicing_score += 20
+        elif metadata_issues > 0 or metadata_score < 70: splicing_score += 10
         
-        # 11. Localization evidence for splicing
         if 'localization_analysis' in analysis_results:
-            loc_results = analysis_results['localization_analysis']
-            tampering_pct = loc_results['tampering_percentage']
-            # High tampering percentage suggests splicing
-            if tampering_pct > 40:
-                splicing_score += 25
-            elif tampering_pct > 25:
-                splicing_score += 20
-            elif tampering_pct > 15:
-                splicing_score += 15
+            tampering_pct = analysis_results['localization_analysis']['tampering_percentage']
+            if tampering_pct > 40: splicing_score += 25
+            elif tampering_pct > 25: splicing_score += 20
+            elif tampering_pct > 15: splicing_score += 15
+        
+        # --- PERBAIKAN: Batasi skor mentah agar tidak lebih dari 100 ---
+        copy_move_score = min(copy_move_score, 100)
+        splicing_score = min(splicing_score, 100)
         
         # Combine traditional and ML scores
-        final_copy_move_score = int((copy_move_score * 0.6 + ml_copy_move_score * 0.2 + ensemble_copy_move * 0.2))
-        final_splicing_score = int((splicing_score * 0.6 + ml_splicing_score * 0.2 + ensemble_splicing * 0.2))
+        raw_copy_move = (copy_move_score * 0.6 + ml_copy_move_score * 0.2 + ensemble_copy_move * 0.2)
+        raw_splicing = (splicing_score * 0.6 + ml_splicing_score * 0.2 + ensemble_splicing * 0.2)
+        
+        final_copy_move_score = min(max(0, int(raw_copy_move)), 100)
+        final_splicing_score = min(max(0, int(raw_splicing)), 100)
         
         # Enhanced decision making
         detection_threshold = 45
         confidence_threshold = 60
-        
         manipulation_type = "Tidak Terdeteksi Manipulasi"
         confidence = "Rendah"
         details = []
@@ -475,140 +363,57 @@ def classify_manipulation_advanced(analysis_results):
                 details = get_enhanced_splicing_details(analysis_results)
         
         return {
-            'type': manipulation_type,
-            'confidence': confidence,
-            'copy_move_score': final_copy_move_score,
-            'splicing_score': final_splicing_score,
+            'type': manipulation_type, 'confidence': confidence,
+            'copy_move_score': final_copy_move_score, 'splicing_score': final_splicing_score,
             'details': details,
-            'ml_scores': {
-                'copy_move': ml_copy_move_score, 
-                'splicing': ml_splicing_score,
-                'ensemble_copy_move': ensemble_copy_move,
-                'ensemble_splicing': ensemble_splicing,
-                'detailed_ml_scores': ml_scores
-            },
+            'ml_scores': {'copy_move': ml_copy_move_score, 'splicing': ml_splicing_score, 'ensemble_copy_move': ensemble_copy_move, 'ensemble_splicing': ensemble_splicing, 'detailed_ml_scores': ml_scores},
             'feature_vector': feature_vector.tolist(),
-            'traditional_scores': {
-                'copy_move': copy_move_score,
-                'splicing': splicing_score
-            }
+            'traditional_scores': {'copy_move': copy_move_score, 'splicing': splicing_score}
         }
-        
     except Exception as e:
         print(f"  Warning: Classification failed: {e}")
-        # Return safe fallback
         return {
-            'type': "Analysis Error",
-            'confidence': "Error",
-            'copy_move_score': 0,
-            'splicing_score': 0,
-            'details': [f"Classification error: {str(e)}"],
-            'ml_scores': {
-                'copy_move': 0, 
-                'splicing': 0,
-                'ensemble_copy_move': 0,
-                'ensemble_splicing': 0,
-                'detailed_ml_scores': {}
-            },
-            'feature_vector': [],
-            'traditional_scores': {
-                'copy_move': 0,
-                'splicing': 0
-            }
+            'type': "Analysis Error", 'confidence': "Error",
+            'copy_move_score': 0, 'splicing_score': 0, 'details': [f"Classification error: {str(e)}"],
+            'ml_scores': {'copy_move': 0, 'splicing': 0, 'ensemble_copy_move': 0, 'ensemble_splicing': 0, 'detailed_ml_scores': {}},
+            'feature_vector': [], 'traditional_scores': {'copy_move': 0, 'splicing': 0}
         }
 
 # ======================= Confidence and Detail Functions =======================
 
 def get_enhanced_confidence_level(score):
-    """Enhanced confidence level calculation"""
-    if score >= 90:
-        return "Sangat Tinggi (>90%)"
-    elif score >= 75:
-        return "Tinggi (75-90%)"
-    elif score >= 60:
-        return "Sedang (60-75%)"
-    elif score >= 45:
-        return "Rendah (45-60%)"
-    else:
-        return "Sangat Rendah (<45%)"
+    if score >= 90: return "Sangat Tinggi (>90%)"
+    elif score >= 75: return "Tinggi (75-90%)"
+    elif score >= 60: return "Sedang (60-75%)"
+    elif score >= 45: return "Rendah (45-60%)"
+    else: return "Sangat Rendah (<45%)"
 
 def get_enhanced_copy_move_details(results):
-    """Enhanced copy-move detection details"""
     details = []
-    
-    if results['ransac_inliers'] > 0:
-        details.append(f"✓ RANSAC verification: {results['ransac_inliers']} geometric matches")
-    
-    if results['geometric_transform'] is not None:
-        transform_type, _ = results['geometric_transform']
-        details.append(f"✓ Geometric transformation: {transform_type}")
-    
-    if len(results['block_matches']) > 0:
-        details.append(f"✓ Block matching: {len(results['block_matches'])} identical blocks")
-    
-    if results['sift_matches'] > 10:
-        details.append(f"✓ Feature matching: {results['sift_matches']} SIFT correspondences")
-    
-    # Add pattern analysis
-    if results['ela_regional_stats']['regional_inconsistency'] < 0.3:
-        details.append("✓ Consistent ELA patterns (same source content)")
-    
-    # Add localization details
-    if 'localization_analysis' in results:
-        loc_results = results['localization_analysis']
-        tampering_pct = loc_results['tampering_percentage']
-        if tampering_pct > 5:
-            details.append(f"✓ K-means localization: {tampering_pct:.1f}% tampering detected")
-    
+    if results['ransac_inliers'] > 0: details.append(f"✓ RANSAC verification: {results['ransac_inliers']} geometric matches")
+    if results['geometric_transform'] is not None: details.append(f"✓ Geometric transformation: {results['geometric_transform'][0]}")
+    if len(results['block_matches']) > 0: details.append(f"✓ Block matching: {len(results['block_matches'])} identical blocks")
+    if results['sift_matches'] > 10: details.append(f"✓ Feature matching: {results['sift_matches']} SIFT correspondences")
+    if results['ela_regional_stats']['regional_inconsistency'] < 0.3: details.append("✓ Consistent ELA patterns (same source content)")
+    if 'localization_analysis' in results and results['localization_analysis']['tampering_percentage'] > 5:
+        details.append(f"✓ K-means localization: {results['localization_analysis']['tampering_percentage']:.1f}% tampering detected")
     return details
 
 def get_enhanced_splicing_details(results):
-    """Enhanced splicing detection details"""
     details = []
-    
-    # ELA anomalies
-    if results['ela_regional_stats']['outlier_regions'] > 0:
-        details.append(f"⚠ ELA anomalies: {results['ela_regional_stats']['outlier_regions']} suspicious regions")
-    
-    # Compression artifacts
-    if results['jpeg_analysis']['compression_inconsistency']:
-        details.append("⚠ JPEG compression inconsistency detected")
-    
-    # Noise patterns
-    if results['noise_analysis']['overall_inconsistency'] > 0.25:
-        details.append(f"⚠ Noise inconsistency: {results['noise_analysis']['overall_inconsistency']:.3f}")
-    
-    # Frequency domain
-    if results['frequency_analysis']['frequency_inconsistency'] > 1.0:
-        details.append("⚠ Frequency domain anomalies detected")
-    
-    # Texture inconsistency
-    if results['texture_analysis']['overall_inconsistency'] > 0.3:
-        details.append("⚠ Texture pattern inconsistency")
-    
-    # Edge inconsistency
-    if results['edge_analysis']['edge_inconsistency'] > 0.3:
-        details.append("⚠ Edge density inconsistency")
-    
-    # Illumination
-    if results['illumination_analysis']['overall_illumination_inconsistency'] > 0.3:
-        details.append("⚠ Illumination inconsistency detected")
-    
-    # Metadata
-    if len(results['metadata']['Metadata_Inconsistency']) > 0:
-        details.append(f"⚠ Metadata issues: {len(results['metadata']['Metadata_Inconsistency'])} found")
-    
-    # Add localization details
-    if 'localization_analysis' in results:
-        loc_results = results['localization_analysis']
-        tampering_pct = loc_results['tampering_percentage']
-        if tampering_pct > 15:
-            details.append(f"⚠ K-means localization: {tampering_pct:.1f}% suspicious areas detected")
-    
+    if results['ela_regional_stats']['outlier_regions'] > 0: details.append(f"⚠ ELA anomalies: {results['ela_regional_stats']['outlier_regions']} suspicious regions")
+    if results['jpeg_analysis']['compression_inconsistency']: details.append("⚠ JPEG compression inconsistency detected")
+    if results['noise_analysis']['overall_inconsistency'] > 0.25: details.append(f"⚠ Noise inconsistency: {results['noise_analysis']['overall_inconsistency']:.3f}")
+    if results['frequency_analysis']['frequency_inconsistency'] > 1.0: details.append("⚠ Frequency domain anomalies detected")
+    if results['texture_analysis']['overall_inconsistency'] > 0.3: details.append("⚠ Texture pattern inconsistency")
+    if results['edge_analysis']['edge_inconsistency'] > 0.3: details.append("⚠ Edge density inconsistency")
+    if results['illumination_analysis']['overall_illumination_inconsistency'] > 0.3: details.append("⚠ Illumination inconsistency detected")
+    if len(results['metadata']['Metadata_Inconsistency']) > 0: details.append(f"⚠ Metadata issues: {len(results['metadata']['Metadata_Inconsistency'])} found")
+    if 'localization_analysis' in results and results['localization_analysis']['tampering_percentage'] > 15:
+        details.append(f"⚠ K-means localization: {results['localization_analysis']['tampering_percentage']:.1f}% suspicious areas detected")
     return details
 
 def get_enhanced_complex_details(results):
-    """Enhanced complex manipulation details"""
     return get_enhanced_copy_move_details(results) + get_enhanced_splicing_details(results)
 
 # ======================= Classification Calibration =======================
